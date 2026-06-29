@@ -1,0 +1,15 @@
+[project]
+name = "neighbourhood-library"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.9"
+dependencies = [
+    "fastapi",
+    "mypy>=1.19.1",
+    "pytest>=8.4.2",
+    "ruff>=0.15.20",
+    "sqlalchemy",
+    "typos>=1.47.2",
+    "uvicorn>=0.39.0",
+]
