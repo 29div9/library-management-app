@@ -3,29 +3,15 @@ from pydantic import BaseModel, Field
 
 
 class MemberCreate(BaseModel):
-    name: str = Field(
-        min_length=1,
-        max_length=50
-    )
-    contact: str = Field(
-        min_length=10,
-        max_length=20,
-        pattern=r"^\+?[1-9]\d{9,19}$"
-    )
+    name: str = Field(min_length=1, max_length=50)
+    contact: str = Field(min_length=10, max_length=20, pattern=r"^\+?[1-9]\d{9,19}$")
     address: str | None = None
 
 
 class MemberUpdate(BaseModel):
-    name: str | None = Field(
-        default=None,
-        min_length=1,
-        max_length=50
-    )
+    name: str | None = Field(default=None, min_length=1, max_length=50)
     contact: str | None = Field(
-        default=None,
-        min_length=10,
-        max_length=20,
-        pattern=r"^\+?[1-9]\d{9,19}$"
+        default=None, min_length=10, max_length=20, pattern=r"^\+?[1-9]\d{9,19}$"
     )
     address: str | None = None
 

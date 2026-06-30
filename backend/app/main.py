@@ -2,12 +2,14 @@ import uvicorn
 from fastapi import FastAPI
 from api.books import router as books_router
 from api.members import router as members_router
+from api.borrowings import router as borrowings_router
 
 app = FastAPI(title="Local Neighbourhood Library API", version="1.0.0")
 
 
 app.include_router(books_router)
 app.include_router(members_router)
+app.include_router(borrowings_router)
 
 
 @app.get("/")

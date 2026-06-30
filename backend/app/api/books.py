@@ -1,80 +1,8 @@
 from fastapi import APIRouter, HTTPException, Response, status
 from schemas.book import BookCreate, BookUpdate, BookResponse
+from data import books
 
 router = APIRouter(prefix="/books", tags=["Books"])
-
-books = [
-    {
-        "id": 1,
-        "name": "Clean Code",
-        "author": "Robert C. Martin",
-        "publisher": "Prentice Hall",
-        "genre": "Programming",
-    },
-    {
-        "id": 2,
-        "name": "The Pragmatic Programmer",
-        "author": "Andrew Hunt, David Thomas",
-        "publisher": "Addison-Wesley",
-        "genre": "Programming",
-    },
-    {
-        "id": 3,
-        "name": "Design Patterns: Elements of Reusable Object-Oriented Software",
-        "author": "Erich Gamma, Richard Helm, Ralph Johnson, John Vlissides",
-        "publisher": "Addison-Wesley",
-        "genre": "Software Engineering",
-    },
-    {
-        "id": 4,
-        "name": "Python Crash Course",
-        "author": "Eric Matthes",
-        "publisher": "No Starch Press",
-        "genre": "Programming",
-    },
-    {
-        "id": 5,
-        "name": "Atomic Habits",
-        "author": "James Clear",
-        "publisher": "Avery",
-        "genre": "Self-Help",
-    },
-    {
-        "id": 6,
-        "name": "The Alchemist",
-        "author": "Paulo Coelho",
-        "publisher": "HarperOne",
-        "genre": "Fiction",
-    },
-    {
-        "id": 7,
-        "name": "To Kill a Mockingbird",
-        "author": "Harper Lee",
-        "publisher": "J. B. Lippincott & Co.",
-        "genre": "Fiction",
-    },
-    {
-        "id": 8,
-        "name": "1984",
-        "author": "George Orwell",
-        "publisher": "Secker & Warburg",
-        "genre": "Fiction",
-    },
-    {
-        "id": 9,
-        "name": "The Hobbit",
-        "author": "J. R. R. Tolkien",
-        "publisher": "George Allen & Unwin",
-        "genre": "Fantasy",
-    },
-    {
-        "id": 10,
-        "name": "Sapiens: A Brief History of Humankind",
-        "author": "Yuval Noah Harari",
-        "publisher": "Harper",
-        "genre": "History",
-    },
-]
 
 
 @router.get("/", response_model=list[BookResponse])
