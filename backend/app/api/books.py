@@ -1,17 +1,19 @@
 from fastapi import APIRouter, HTTPException, Response, status
-from schemas.book import BookCreate, BookUpdate, BookResponse
-from data import books
+from app.schemas.book import BookCreate, BookUpdate, BookResponse
+from app.data import books
 
 router = APIRouter(prefix="/books", tags=["Books"])
 
 
 @router.get("/", response_model=list[BookResponse])
 def get_books():
+    """Retrieve all books in the library"""
     return books
 
 
 @router.get("/{book_id}", response_model=BookResponse)
 def get_book(book_id: int):
+    """Retrieve a book by its ID"""
     book_found = next(
         (existing_book for existing_book in books if existing_book["id"] == book_id),
         None,
@@ -26,6 +28,7 @@ def get_book(book_id: int):
 
 @router.post("/", response_model=BookResponse, status_code=status.HTTP_201_CREATED)
 def create_book(book: BookCreate):
+    """Add a new book to the library"""
     new_book = book.model_dump()
     # Check if book already exists
     for existing_book in books:
@@ -45,6 +48,7 @@ def create_book(book: BookCreate):
 
 @router.patch("/{book_id}", response_model=BookResponse)
 def update_book(book_id: int, book: BookUpdate):
+    """Update one or more fields of an existing book"""
     book_found = next(
         (existing_book for existing_book in books if existing_book["id"] == book_id),
         None,
@@ -73,6 +77,7 @@ def update_book(book_id: int, book: BookUpdate):
 
 @router.delete("/{book_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_book(book_id: int):
+    """Delete a book from the library"""
     book_found = next((book for book in books if book["id"] == book_id), None)
     if book_found is None:
         raise HTTPException(
@@ -80,4 +85,3 @@ def delete_book(book_id: int):
             detail="Book not found.",
         )
     books.remove(book_found)
-    return Response()

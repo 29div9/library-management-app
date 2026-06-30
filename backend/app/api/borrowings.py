@@ -1,19 +1,21 @@
 from datetime import datetime, timedelta
 from typing import cast
 from fastapi import APIRouter, HTTPException, status
-from schemas.borrowing import BorrowingCreate, BorrowingResponse
-from data import books, borrowings, members
+from app.schemas.borrowing import BorrowingCreate, BorrowingResponse
+from app.data import books, borrowings, members
 
 router = APIRouter(prefix="/borrowings", tags=["Borrowings"])
 
 
 @router.get("/", response_model=list[BorrowingResponse])
 def get_borrowings():
+    """Retrieve all borrowings"""
     return borrowings
 
 
 @router.get("/{borrowing_id}", response_model=BorrowingResponse)
 def get_borrowing(borrowing_id: int):
+    """Retrieve a borrowing by its ID"""
     borrowing_found = next(
         (
             existing_borrowing
@@ -31,6 +33,9 @@ def get_borrowing(borrowing_id: int):
 
 @router.post("/", response_model=BorrowingResponse, status_code=status.HTTP_201_CREATED)
 def create_borrowing(borrowing: BorrowingCreate):
+    """Add entry for a new borrowing.
+    It also checks if the book is already borrowed before creating borrowing.
+    """
     new_borrowing = borrowing.model_dump()
     # check if library has the book
     book_found = next(
@@ -87,6 +92,9 @@ def create_borrowing(borrowing: BorrowingCreate):
 
 @router.patch("/{borrowing_id}", response_model=BorrowingResponse)
 def update_borrowing(borrowing_id: int):
+    """Update the return date for a book.
+    It also calculates fine if the return date is after due date
+    """
     # check if borrowing exists
     active_borrowing = next(
         (

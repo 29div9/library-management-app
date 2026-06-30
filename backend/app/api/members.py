@@ -1,18 +1,20 @@
 from datetime import datetime
 from fastapi import APIRouter, HTTPException, Response, status
-from schemas.member import MemberCreate, MemberUpdate, MemberResponse
-from data import members
+from app.schemas.member import MemberCreate, MemberUpdate, MemberResponse
+from app.data import members
 
 router = APIRouter(prefix="/members", tags=["Members"])
 
 
 @router.get("/", response_model=list[MemberResponse])
 def get_members():
+    """Retrieve all members of the library"""
     return members
 
 
 @router.get("/{member_id}", response_model=MemberResponse)
 def get_member(member_id: int):
+    """Retrieve a member by its ID"""
     member_found = next(
         (
             existing_member
@@ -30,6 +32,7 @@ def get_member(member_id: int):
 
 @router.post("/", response_model=MemberResponse, status_code=status.HTTP_201_CREATED)
 def create_member(member: MemberCreate):
+    """Add a new member to the library"""
     new_member = member.model_dump()
     for existing_member in members:
         # only comparing contact as its unique as per DB schema
@@ -52,6 +55,7 @@ def create_member(member: MemberCreate):
 
 @router.patch("/{member_id}", response_model=MemberResponse)
 def update_member(member_id: int, member: MemberUpdate):
+    """Update one or more fields of an existing member"""
     # first find the member
     member_found = next(
         (
@@ -103,6 +107,7 @@ def update_member(member_id: int, member: MemberUpdate):
 
 @router.delete("/{member_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_member(member_id: int):
+    """Delete a member from the library"""
     member_found = next(
         (
             existing_member
@@ -116,4 +121,3 @@ def delete_member(member_id: int):
             status_code=status.HTTP_404_NOT_FOUND, detail="Member not found."
         )
     members.remove(member_found)
-    return Response()
