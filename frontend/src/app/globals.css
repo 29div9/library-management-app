@@ -1,0 +1,43 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-library-cream text-library-ink font-sans antialiased;
+  }
+}
+
+@layer components {
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-md px-4 py-2 text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-library-forest/40 disabled:cursor-not-allowed disabled:opacity-50;
+  }
+
+  .btn-primary {
+    @apply btn bg-library-forest text-white hover:bg-library-sage;
+  }
+
+  .btn-secondary {
+    @apply btn border border-library-border bg-library-paper text-library-ink hover:bg-library-cream;
+  }
+
+  .btn-danger {
+    @apply btn bg-library-rust text-white hover:bg-library-rust/90;
+  }
+
+  .btn-ghost {
+    @apply btn text-library-sage hover:bg-library-border/40;
+  }
+
+  .input {
+    @apply w-full rounded-md border border-library-border bg-library-paper px-3 py-2 text-sm text-library-ink placeholder:text-library-sage/70 focus:border-library-forest focus:outline-none focus:ring-2 focus:ring-library-forest/20;
+  }
+
+  .label {
+    @apply mb-1 block text-sm font-medium text-library-ink;
+  }
+
+  .card {
+    @apply rounded-xl border border-library-border bg-library-paper p-6 shadow-sm;
+  }
+}

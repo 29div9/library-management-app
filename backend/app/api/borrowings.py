@@ -18,6 +18,44 @@ def get_borrowings(db: Session = Depends(get_db)):
     return db.scalars(select(Borrowing)).all()
 
 
+@router.get("/overdue", response_model=list[BorrowingResponse])
+def get_overdue_borrowings(db: Session = Depends(get_db)):
+    """Retrieve borrowings which are past their due date"""
+
+    today = datetime.now()
+    return db.scalars(
+        select(Borrowing).where(
+            Borrowing.return_date.is_(None),
+            today > Borrowing.due_date
+        )
+        .order_by(Borrowing.due_date)
+    ).all()
+
+
+@router.get("/active", response_model=list[BorrowingResponse])
+def get_active_borrowings(db: Session = Depends(get_db)):
+    """Retrieve all active borrowings"""
+
+    return db.scalars(
+        select(Borrowing).where(
+            Borrowing.return_date.is_(None),
+        )
+        .order_by(Borrowing.due_date)
+    ).all()
+
+
+@router.get("/returned", response_model=list[BorrowingResponse])
+def get_returned_borrowings(db: Session = Depends(get_db)):
+    """Retrieve all returned borrowings"""
+
+    return db.scalars(
+        select(Borrowing).where(
+            Borrowing.return_date.is_not(None),
+        )
+        .order_by(Borrowing.return_date.desc())
+    ).all()
+
+
 @router.get("/{borrowing_id}", response_model=BorrowingResponse)
 def get_borrowing(borrowing_id: int, db: Session = Depends(get_db)):
     """Retrieve a borrowing by its ID"""
@@ -126,28 +164,3 @@ def update_borrowing(borrowing_id: int, db: Session = Depends(get_db)):
 
     return active_borrowing
 
-
-@router.get("/overdue", response_model=list[BorrowingResponse])
-def get_overdue_borrowings(db: Session = Depends(get_db)):
-    """Retrieve borrowings which are past their due date"""
-
-    today = datetime.now()
-    return db.scalars(
-        select(Borrowing).where(
-            Borrowing.return_date.is_(None),
-            today > Borrowing.due_date
-        )
-        .order_by(Borrowing.due_date)
-    ).all()
-
-
-@router.get("/active", response_model=list[BorrowingResponse])
-def get_active_borrowings(db: Session = Depends(get_db)):
-    """Retrieve all active borrowings"""
-
-    return db.scalars(
-        select(Borrowing).where(
-            Borrowing.return_date.is_(None),
-        )
-        .order_by(Borrowing.due_date)
-    ).all()

@@ -21,3 +21,7 @@ class BookResponse(BaseModel):
     author: str
     publisher: str
     genre: str
+
+
+class BookAvailabilityResponse(BaseModel):
+    available: bool

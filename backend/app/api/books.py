@@ -1,5 +1,10 @@
 from fastapi import APIRouter, Depends, HTTPException, status
-from backend.app.schemas.book import BookCreate, BookUpdate, BookResponse
+from backend.app.schemas.book import (
+    BookCreate,
+    BookUpdate,
+    BookResponse,
+    BookAvailabilityResponse,
+)
 from backend.app.schemas.borrowing import BorrowingResponse
 from backend.app.schemas.member import MemberResponse
 from sqlalchemy import select
@@ -152,9 +157,8 @@ def get_book_borrowings(book_id: int, db: Session = Depends(get_db)):
         )
 
     return db.scalars(
-        select(Borrowing).where(
-            Borrowing.book_id == book_id
-        )
+        select(Borrowing)
+        .where(Borrowing.book_id == book_id)
         .order_by(Borrowing.borrow_date.desc())
     ).all()
 
@@ -177,3 +181,23 @@ def get_book_current_borrower(book_id: int, db: Session = Depends(get_db)):
             Borrowing.return_date.is_(None),
         )
     )
+
+
+@router.get("/{book_id}/availability", response_model=BookAvailabilityResponse)
+def is_book_available(book_id: int, db: Session = Depends(get_db)):
+    """Check if a book is available for borrowing"""
+    book_found = db.scalar(select(Book).where(Book.id == book_id))
+    if book_found is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Book not found.",
+        )
+
+    active_borrowing = db.scalar(
+        select(Borrowing).where(
+            Borrowing.book_id == book_id,
+            Borrowing.return_date.is_(None),
+        )
+    )
+
+    return {"available": active_borrowing is None}

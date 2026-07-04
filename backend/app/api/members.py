@@ -129,9 +129,7 @@ def delete_member(member_id: int, db: Session = Depends(get_db)):
 def get_member_borrowings(member_id: int, db: Session = Depends(get_db)):
     """Retrieve the borrowing history of a member"""
 
-    member = db.scalar(
-        select(Member).where(Member.id == member_id)
-    )
+    member = db.scalar(select(Member).where(Member.id == member_id))
 
     if member is None:
         raise HTTPException(
@@ -139,9 +137,8 @@ def get_member_borrowings(member_id: int, db: Session = Depends(get_db)):
             detail="Member not found.",
         )
     return db.scalars(
-        select(Borrowing).where(
-            Borrowing.member_id == member_id
-        )
+        select(Borrowing)
+        .where(Borrowing.member_id == member_id)
         .order_by(Borrowing.borrow_date.desc())
     ).all()
 
@@ -150,9 +147,7 @@ def get_member_borrowings(member_id: int, db: Session = Depends(get_db)):
 def get_member_active_borrowings(member_id: int, db: Session = Depends(get_db)):
     """Retrieve the active borrowings of a member"""
 
-    member = db.scalar(
-        select(Member).where(Member.id == member_id)
-    )
+    member = db.scalar(select(Member).where(Member.id == member_id))
 
     if member is None:
         raise HTTPException(
@@ -160,9 +155,9 @@ def get_member_active_borrowings(member_id: int, db: Session = Depends(get_db)):
             detail="Member not found.",
         )
     return db.scalars(
-        select(Borrowing).where(
-            Borrowing.member_id == member_id,
-            Borrowing.return_date.is_(None)
-        )
-        .order_by(Borrowing.borrow_date) # default ASC order to show books to be returned first
+        select(Borrowing)
+        .where(Borrowing.member_id == member_id, Borrowing.return_date.is_(None))
+        .order_by(
+            Borrowing.borrow_date
+        )  # default ASC order to show books to be returned first
     ).all()
