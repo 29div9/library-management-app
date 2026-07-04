@@ -16,3 +16,7 @@ dependencies = [
     "typos>=1.47.2",
     "uvicorn>=0.39.0",
 ]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["backend/tests"]

@@ -1,8 +1,8 @@
 import pytest
 from fastapi.testclient import TestClient
 
-from app.main import app
-from app.data import members
+from backend.app.main import app
+from backend.app.data import members
 
 client = TestClient(app)
 
@@ -37,9 +37,7 @@ def test_get_member_not_found():
     response = client.get("/members/999")
 
     assert response.status_code == 404
-    assert response.json() == {
-        "detail": "Member not found."
-    }
+    assert response.json() == {"detail": "Member not found."}
 
 
 def test_create_member_success(reset_members):
@@ -47,7 +45,7 @@ def test_create_member_success(reset_members):
     payload = {
         "name": "John Doe",
         "contact": "9876501234",
-        "address": "221B Baker Street"
+        "address": "221B Baker Street",
     }
 
     response = client.post("/members/", json=payload)
@@ -70,22 +68,18 @@ def test_create_member_duplicate_contact(reset_members):
     payload = {
         "name": "Another User",
         "contact": members[0]["contact"],
-        "address": "Some Address"
+        "address": "Some Address",
     }
 
     response = client.post("/members/", json=payload)
 
     assert response.status_code == 409
-    assert response.json() == {
-        "detail": "Contact number already exists."
-    }
+    assert response.json() == {"detail": "Contact number already exists."}
 
 
 def test_patch_member_success(reset_members):
     """Should update a member's address."""
-    payload = {
-        "address": "New Address"
-    }
+    payload = {"address": "New Address"}
 
     response = client.patch("/members/1", json=payload)
 
@@ -95,9 +89,7 @@ def test_patch_member_success(reset_members):
 
 def test_patch_member_contact_success(reset_members):
     """Should update a member's contact number."""
-    payload = {
-        "contact": "9999999999"
-    }
+    payload = {"contact": "9999999999"}
 
     response = client.patch("/members/1", json=payload)
 
@@ -107,30 +99,22 @@ def test_patch_member_contact_success(reset_members):
 
 def test_patch_member_duplicate_contact(reset_members):
     """Should reject updating to an existing contact number."""
-    payload = {
-        "contact": members[1]["contact"]
-    }
+    payload = {"contact": members[1]["contact"]}
 
     response = client.patch("/members/1", json=payload)
 
     assert response.status_code == 409
-    assert response.json() == {
-        "detail": "Contact number already exists."
-    }
+    assert response.json() == {"detail": "Contact number already exists."}
 
 
 def test_patch_member_not_found(reset_members):
     """Should return 404 when updating a non-existent member."""
-    payload = {
-        "address": "New Address"
-    }
+    payload = {"address": "New Address"}
 
     response = client.patch("/members/999", json=payload)
 
     assert response.status_code == 404
-    assert response.json() == {
-        "detail": "Member not found."
-    }
+    assert response.json() == {"detail": "Member not found."}
 
 
 def test_patch_member_empty_body(reset_members):
@@ -138,18 +122,16 @@ def test_patch_member_empty_body(reset_members):
     response = client.patch("/members/1", json={})
 
     assert response.status_code == 400
-    assert response.json() == {
-        "detail": "At least one field must be provided."
-    }
+    assert response.json() == {"detail": "At least one field must be provided."}
 
 
 def test_delete_member_success(reset_members):
     """Should delete an existing member."""
-    response = client.delete("/members/1")
+    response = client.delete("/members/3")
 
     assert response.status_code == 204
 
-    response = client.get("/members/1")
+    response = client.get("/members/3")
     assert response.status_code == 404
 
 
@@ -158,6 +140,4 @@ def test_delete_member_not_found(reset_members):
     response = client.delete("/members/999")
 
     assert response.status_code == 404
-    assert response.json() == {
-        "detail": "Member not found."
-    }
+    assert response.json() == {"detail": "Member not found."}

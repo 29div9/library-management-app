@@ -1,8 +1,8 @@
 import pytest
 from fastapi.testclient import TestClient
 
-from app.main import app
-from app.data import books, members, borrowings
+from backend.app.main import app
+from backend.app.data import books, members, borrowings
 
 client = TestClient(app)
 
@@ -47,17 +47,12 @@ def test_get_borrowing_not_found():
     response = client.get("/borrowings/999")
 
     assert response.status_code == 404
-    assert response.json() == {
-        "detail": "Borrowing not found."
-    }
+    assert response.json() == {"detail": "Borrowing not found."}
 
 
 def test_create_borrowing_success(reset_data):
     """Should create a borrowing for an available book."""
-    payload = {
-        "book_id": 2,
-        "member_id": 1
-    }
+    payload = {"book_id": 2, "member_id": 1}
 
     response = client.post("/borrowings/", json=payload)
 
@@ -76,39 +71,29 @@ def test_create_borrowing_success(reset_data):
 
 def test_create_borrowing_book_not_found(reset_data):
     """Should return 404 when the requested book does not exist."""
-    payload = {
-        "book_id": 999,
-        "member_id": 1
-    }
+    payload = {"book_id": 999, "member_id": 1}
 
     response = client.post("/borrowings/", json=payload)
 
     assert response.status_code == 404
-    assert response.json() == {
-        "detail": "Book not found."
-    }
+    assert response.json() == {"detail": "Book not found."}
 
 
 def test_create_borrowing_member_not_found(reset_data):
     """Should return 404 when the member does not exist."""
-    payload = {
-        "book_id": 2,
-        "member_id": 999
-    }
+    payload = {"book_id": 2, "member_id": 999}
 
     response = client.post("/borrowings/", json=payload)
 
     assert response.status_code == 404
-    assert response.json() == {
-        "detail": "Member not found."
-    }
+    assert response.json() == {"detail": "Member not found."}
 
 
 def test_create_borrowing_inactive_member(reset_data):
     """Should reject borrowing requests from inactive members."""
     payload = {
         "book_id": 2,
-        "member_id": 3  # inactive in sample data
+        "member_id": 3,  # inactive in sample data
     }
 
     response = client.post("/borrowings/", json=payload)
@@ -121,20 +106,18 @@ def test_create_borrowing_book_already_borrowed(reset_data):
     """Should reject borrowing a book that is currently on loan."""
     payload = {
         "book_id": 3,  # active borrowing in sample data
-        "member_id": 1
+        "member_id": 1,
     }
 
     response = client.post("/borrowings/", json=payload)
 
     assert response.status_code == 409
-    assert response.json() == {
-        "detail": "Book is already borrowed."
-    }
+    assert response.json() == {"detail": "Book is already borrowed."}
 
 
 def test_return_book_success(reset_data):
     """Should successfully return a borrowed book."""
-    response = client.patch("/borrowings/2")
+    response = client.patch("/borrowings/2/return")
 
     assert response.status_code == 200
 
@@ -146,32 +129,23 @@ def test_return_book_success(reset_data):
 
 def test_return_book_not_found(reset_data):
     """Should return 404 for a non-existent borrowing."""
-    response = client.patch("/borrowings/999")
+    response = client.patch("/borrowings/999/return")
 
     assert response.status_code == 404
-    assert response.json() == {
-        "detail": "Borrowing does not exist."
-    }
+    assert response.json() == {"detail": "Borrowing does not exist."}
 
 
 def test_return_book_already_returned(reset_data):
     """Should reject returning a book that has already been returned."""
-    response = client.patch("/borrowings/1")
+    response = client.patch("/borrowings/1/return")
 
     assert response.status_code == 409
-    assert response.json() == {
-        "detail": "Book has already been returned."
-    }
+    assert response.json() == {"detail": "Book has already been returned."}
 
 
 def test_return_book_calculates_fine(reset_data):
     """Should calculate a fine for overdue returns."""
-    borrowing = next(b for b in borrowings if b["id"] == 2)
-
-    # Force the borrowing to be overdue
-    borrowing["due_date"] = borrowing["borrow_date"]
-
-    response = client.patch("/borrowings/2")
+    response = client.patch("/borrowings/2/return")
 
     assert response.status_code == 200
     assert response.json()["fine"] > 0

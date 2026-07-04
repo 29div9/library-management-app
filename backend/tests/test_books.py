@@ -1,8 +1,8 @@
 import pytest
 from fastapi.testclient import TestClient
 
-from app.main import app
-from app.data import books
+from backend.app.main import app
+from backend.app.data import books
 
 client = TestClient(app)
 
@@ -34,9 +34,7 @@ def test_get_book_not_found():
     response = client.get("/books/999")
 
     assert response.status_code == 404
-    assert response.json() == {
-        "detail": "Book not found."
-    }
+    assert response.json() == {"detail": "Book not found."}
 
 
 def test_create_book_success(reset_books):
@@ -44,7 +42,7 @@ def test_create_book_success(reset_books):
         "name": "Refactoring",
         "author": "Martin Fowler",
         "publisher": "Addison-Wesley",
-        "genre": "Programming"
+        "genre": "Programming",
     }
 
     response = client.post("/books/", json=payload)
@@ -71,15 +69,11 @@ def test_create_duplicate_book(reset_books):
     response = client.post("/books/", json=payload)
 
     assert response.status_code == 409
-    assert response.json() == {
-        "detail": "Book already exists."
-    }
+    assert response.json() == {"detail": "Book already exists."}
 
 
 def test_patch_book_success(reset_books):
-    payload = {
-        "genre": "Computer Science"
-    }
+    payload = {"genre": "Computer Science"}
 
     response = client.patch("/books/1", json=payload)
 
@@ -88,33 +82,27 @@ def test_patch_book_success(reset_books):
 
 
 def test_patch_book_not_found(reset_books):
-    payload = {
-        "genre": "Computer Science"
-    }
+    payload = {"genre": "Computer Science"}
 
     response = client.patch("/books/999", json=payload)
 
     assert response.status_code == 404
-    assert response.json() == {
-        "detail": "Book not found."
-    }
+    assert response.json() == {"detail": "Book not found."}
 
 
 def test_patch_book_empty_body(reset_books):
     response = client.patch("/books/1", json={})
 
     assert response.status_code == 400
-    assert response.json() == {
-        "detail": "At least one field must be provided."
-    }
+    assert response.json() == {"detail": "At least one field must be provided."}
 
 
 def test_delete_book_success(reset_books):
-    response = client.delete("/books/1")
+    response = client.delete("/books/2")
 
     assert response.status_code == 204
 
-    response = client.get("/books/1")
+    response = client.get("/books/2")
     assert response.status_code == 404
 
 
@@ -122,6 +110,4 @@ def test_delete_book_not_found(reset_books):
     response = client.delete("/books/999")
 
     assert response.status_code == 404
-    assert response.json() == {
-        "detail": "Book not found."
-    }
+    assert response.json() == {"detail": "Book not found."}
