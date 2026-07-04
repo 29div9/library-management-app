@@ -26,7 +26,7 @@ book_id INT NOT NULL,
 member_id INT NOT NULL,
 borrow_date TIMESTAMP NOT NULL,
 return_date TIMESTAMP,
-fine NUMERIC(10,2),
+fine INTEGER,
 due_date TIMESTAMP NOT NULL,
 CONSTRAINT borrowings_book_id_fkey FOREIGN KEY (book_id)
  REFERENCES books (book_id) MATCH SIMPLE

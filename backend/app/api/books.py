@@ -1,11 +1,15 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from backend.app.schemas.book import BookCreate, BookUpdate, BookResponse
+from backend.app.schemas.borrowing import BorrowingResponse
+from backend.app.schemas.member import MemberResponse
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from backend.app.database import get_db
 from backend.app.models.book import Book
+from backend.app.models.borrowing import Borrowing
+from backend.app.models.member import Member
 
 router = APIRouter(prefix="/books", tags=["Books"])
 
@@ -135,3 +139,41 @@ def delete_book(book_id: int, db: Session = Depends(get_db)):
             status_code=status.HTTP_409_CONFLICT,
             detail="Cannot delete book because it has borrowing records.",
         )
+
+
+@router.get("/{book_id}/borrowings", response_model=list[BorrowingResponse])
+def get_book_borrowings(book_id: int, db: Session = Depends(get_db)):
+    """Retrieve the borrowing history of a book, newest first"""
+    book_found = db.scalar(select(Book).where(Book.id == book_id))
+    if book_found is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Book not found.",
+        )
+
+    return db.scalars(
+        select(Borrowing).where(
+            Borrowing.book_id == book_id
+        )
+        .order_by(Borrowing.borrow_date.desc())
+    ).all()
+
+
+@router.get("/{book_id}/current-borrower", response_model=MemberResponse)
+def get_book_current_borrower(book_id: int, db: Session = Depends(get_db)):
+    """Retrieve the current borrower of a book"""
+    book_found = db.scalar(select(Book).where(Book.id == book_id))
+    if book_found is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Book not found.",
+        )
+
+    return db.scalar(
+        select(Member)
+        .join(Borrowing, Borrowing.member_id == Member.id)
+        .where(
+            Borrowing.book_id == book_id,
+            Borrowing.return_date.is_(None),
+        )
+    )

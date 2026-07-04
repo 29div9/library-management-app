@@ -1,12 +1,14 @@
 from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException, status
 from backend.app.schemas.member import MemberCreate, MemberUpdate, MemberResponse
+from backend.app.schemas.borrowing import BorrowingResponse
 
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from backend.app.models.member import Member
+from backend.app.models.borrowing import Borrowing
 from backend.app.database import get_db
 
 router = APIRouter(prefix="/members", tags=["Members"])
@@ -121,3 +123,46 @@ def delete_member(member_id: int, db: Session = Depends(get_db)):
             status_code=status.HTTP_409_CONFLICT,
             detail="Cannot delete member because it has borrowing records.",
         )
+
+
+@router.get("/{member_id}/borrowings", response_model=list[BorrowingResponse])
+def get_member_borrowings(member_id: int, db: Session = Depends(get_db)):
+    """Retrieve the borrowing history of a member"""
+
+    member = db.scalar(
+        select(Member).where(Member.id == member_id)
+    )
+
+    if member is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Member not found.",
+        )
+    return db.scalars(
+        select(Borrowing).where(
+            Borrowing.member_id == member_id
+        )
+        .order_by(Borrowing.borrow_date.desc())
+    ).all()
+
+
+@router.get("/{member_id}/active-borrowings", response_model=list[BorrowingResponse])
+def get_member_active_borrowings(member_id: int, db: Session = Depends(get_db)):
+    """Retrieve the active borrowings of a member"""
+
+    member = db.scalar(
+        select(Member).where(Member.id == member_id)
+    )
+
+    if member is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Member not found.",
+        )
+    return db.scalars(
+        select(Borrowing).where(
+            Borrowing.member_id == member_id,
+            Borrowing.return_date.is_(None)
+        )
+        .order_by(Borrowing.borrow_date) # default ASC order to show books to be returned first
+    ).all()
