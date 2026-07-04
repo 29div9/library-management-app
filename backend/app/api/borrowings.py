@@ -1,8 +1,8 @@
 from datetime import datetime, timedelta
 from typing import cast
 from fastapi import APIRouter, HTTPException, status
-from app.schemas.borrowing import BorrowingCreate, BorrowingResponse
-from app.data import books, borrowings, members
+from backend.app.schemas.borrowing import BorrowingCreate, BorrowingResponse
+from backend.app.data import books, borrowings, members
 
 router = APIRouter(prefix="/borrowings", tags=["Borrowings"])
 

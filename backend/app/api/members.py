@@ -1,28 +1,27 @@
 from datetime import datetime
-from fastapi import APIRouter, HTTPException, Response, status
-from app.schemas.member import MemberCreate, MemberUpdate, MemberResponse
-from app.data import members
+from fastapi import APIRouter, Depends, HTTPException, status
+from backend.app.schemas.member import MemberCreate, MemberUpdate, MemberResponse
+
+from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
+from sqlalchemy.orm import Session
+
+from backend.app.models.member import Member
+from backend.app.database import get_db
 
 router = APIRouter(prefix="/members", tags=["Members"])
 
 
 @router.get("/", response_model=list[MemberResponse])
-def get_members():
+def get_members(db: Session = Depends(get_db)):
     """Retrieve all members of the library"""
-    return members
+    return db.scalars(select(Member)).all()
 
 
 @router.get("/{member_id}", response_model=MemberResponse)
-def get_member(member_id: int):
+def get_member(member_id: int, db: Session = Depends(get_db)):
     """Retrieve a member by its ID"""
-    member_found = next(
-        (
-            existing_member
-            for existing_member in members
-            if existing_member["id"] == member_id
-        ),
-        None,
-    )
+    member_found = db.scalar(select(Member).where(Member.id == member_id))
     if member_found is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Member not found."
@@ -31,93 +30,94 @@ def get_member(member_id: int):
 
 
 @router.post("/", response_model=MemberResponse, status_code=status.HTTP_201_CREATED)
-def create_member(member: MemberCreate):
+def create_member(member: MemberCreate, db: Session = Depends(get_db)):
     """Add a new member to the library"""
-    new_member = member.model_dump()
-    for existing_member in members:
-        # only comparing contact as its unique as per DB schema
-        if existing_member["contact"] == new_member["contact"]:
-            raise HTTPException(
-                status_code=status.HTTP_409_CONFLICT,
-                detail="Contact number already exists.",
-            )
-    new_member["id"] = len(members) + 1
-    # not setting it as default in the schema
+
+    # only comparing contact as its unique as per DB schema
+    existing_member = db.scalar(select(Member).where(Member.contact == member.contact))
+    if existing_member:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Contact number already exists.",
+        )
+
+    # setting the defaults here and not setting it them in the schema
     # as pydantic should only be responsible for data validation and
     # serialization and not for biz rules
-    new_member["joining_date"] = datetime.now()
-    new_member["exit_date"] = None
-    new_member["is_active"] = True
+    new_member = Member(
+        name=member.name,
+        joining_date=datetime.now(),
+        exit_date=None,
+        is_active=True,
+        contact=member.contact,
+        address=member.address,
+    )
 
-    members.append(new_member)
+    db.add(new_member)
+    db.commit()
+    db.refresh(new_member)
+
     return new_member
 
 
 @router.patch("/{member_id}", response_model=MemberResponse)
-def update_member(member_id: int, member: MemberUpdate):
+def update_member(member_id: int, member: MemberUpdate, db: Session = Depends(get_db)):
     """Update one or more fields of an existing member"""
-    # first find the member
-    member_found = next(
-        (
-            existing_member
-            for existing_member in members
-            if existing_member["id"] == member_id
-        ),
-        None,
-    )
 
-    # if the user is updating contact too
+    member_found = db.scalar(select(Member).where(Member.id == member_id))
+
     if member_found is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Member not found."
         )
 
-    update = member.model_dump(
-        exclude_unset=True
-    )  # only include fields that user sent in request
-    if not update:
+    updates = member.model_dump(exclude_unset=True)
+
+    if not updates:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="At least one field must be provided.",
         )
 
-    if "contact" in update:
-        duplicate_member = next(
-            (
-                existing_member
-                for existing_member in members
-                # Ensure no other member already has the requested contact number
-                if (
-                    existing_member["contact"] == update["contact"]
-                    and existing_member["id"] != member_id
-                )
-            ),
-            None,
+    if "contact" in updates:
+        updated_contact = updates.get("contact", member_found.contact)
+
+        duplicate_member = db.scalar(
+            select(Member).where(
+                Member.contact == updated_contact, Member.id != member_id
+            )
         )
+
         if duplicate_member:
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
                 detail="Contact number already exists.",
             )
+    # this will update only the fields provided by user
+    for key, value in updates.items():
+        setattr(member_found, key, value)
 
-    for key, value in update.items():
-        member_found[key] = value
+    db.commit()
+    db.refresh(member_found)
+
     return member_found
 
 
 @router.delete("/{member_id}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_member(member_id: int):
+def delete_member(member_id: int, db: Session = Depends(get_db)):
     """Delete a member from the library"""
-    member_found = next(
-        (
-            existing_member
-            for existing_member in members
-            if existing_member["id"] == member_id
-        ),
-        None,
-    )
+
+    member_found = db.scalar(select(Member).where(Member.id == member_id))
     if member_found is None:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND, detail="Member not found."
         )
-    members.remove(member_found)
+    try:
+        db.delete(member_found)
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="Cannot delete member because it has borrowing records.",
+        )
