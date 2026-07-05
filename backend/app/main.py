@@ -27,7 +27,3 @@ app.include_router(borrowings_router)
 @app.get("/")
 def root():
     return {"msg": "Library API is running"}
-
-
-if __name__ == "__main__":
-    uvicorn.run(app, host="localhost", port=8001)

@@ -10,7 +10,7 @@ The application allows librarians to manage books, members, and borrowings throu
 
 ### Backend
 
-* Python 3.13
+* Python 3.12
 * FastAPI
 * SQLAlchemy 2.x
 * PostgreSQL
@@ -28,29 +28,20 @@ The application allows librarians to manage books, members, and borrowings throu
 
 ### ✅ Implemented
 
-* Books CRUD API
-* Members CRUD API
-* Borrowings API
+## Features
 
-  * Create borrowing
-  * Return book
-  * Active borrowings
-  * Returned borrowings
-  * Overdue borrowings
-  * Borrowing history by member
-  * Borrowing history by book
-  * Current borrower lookup
-  * Book availability lookup
-* PostgreSQL database integration
-* SQLAlchemy ORM models
-* Request and response validation using Pydantic
-* Unit and integration tests
-* Next.js staff portal
-
-### 🚧 In Progress
-
-* Authentication
-* Docker support
+| Category         | Functionality                                                     |
+| ---------------- | ----------------------------------------------------------------- |
+| **Books**        | Create, retrieve, update, and delete books                        |
+| **Members**      | Create, retrieve, update, and delete members                      |
+| **Borrowings**   | Record borrowings, return books, calculate fines, track due dates |
+| **Queries**      | View active, returned, and overdue borrowings                     |
+| **History**      | View borrowing history by member and by book                      |
+| **Availability** | Check book availability and identify the current borrower         |
+| **Database**     | PostgreSQL with SQLAlchemy 2.x ORM                                |
+| **Validation**   | Request/response validation with Pydantic v2                      |
+| **Testing**      | Unit and integration tests for backend APIs                       |
+| **Frontend**     | Next.js staff portal for managing books, members, and borrowings  |
 
 ---
 
@@ -151,10 +142,14 @@ DB_PASSWORD=your_password
 
 ## 5. Create the database
 
-Create a PostgreSQL database and execute:
+Create a PostgreSQL database named `neighbourhood_library`.
+
+Execute `database/schema.sql` against the database using your preferred PostgreSQL client (e.g. psql, pgAdmin Query Tool, or another SQL client).
+
+Example using `psql`:l
 
 ```text
-database/schema.sql
+psql -U postgres -d neighbourhood_library -f database/schema.sq
 ```
 
 to create all required tables.
@@ -178,12 +173,38 @@ Interactive API documentation:
 ```text
 http://localhost:8000/docs
 ```
+An OpenAPI specification is also available at:
 
+```text
+http://localhost:8000/openapi.json
+```
 ---
 
-## 7. Run backend tests
+## 7. Run Backend Tests
 
 The backend tests use a dedicated PostgreSQL database and refuse to run if the configured database name does not end with `_test`.
+
+### Create the test database
+
+Create a PostgreSQL database named `neighbourhood_library_test`.
+
+Execute `database/schema.sql` against the test database using your preferred PostgreSQL client (e.g. `psql`, pgAdmin Query Tool, or another SQL client).
+
+Example using `psql`:
+
+```text
+psql -U postgres -d neighbourhood_library_test -f database/schema.sql
+```
+
+Populate the test database with the initial test data by executing `database/test_seed.sql`.
+
+Example using `psql`:
+
+```text
+psql -U postgres -d neighbourhood_library_test -f database/test_seed.sql
+```
+
+### Configure the test environment
 
 Copy:
 
@@ -191,24 +212,23 @@ Copy:
 .env.test.example
 ```
 
-to
+to:
 
 ```text
 .env.test
 ```
 
-Configure your PostgreSQL credentials and ensure the test database exists.
+Update the PostgreSQL connection details to point to the test database.
 
-Run the test suite:
+### Run the tests
 
 ```bash
 uv run pytest backend/tests
 ```
 
-The test suite truncates and reseeds only the configured test database before each test.
+The test suite truncates and reseeds only the configured test database before each test to ensure tests are isolated and repeatable.
 
-> **Do not point `.env.test` to your development database.**
-
+> **Never point `.env.test` to your development database.**
 ---
 
 ## Dependency Management
@@ -232,22 +252,11 @@ Project dependency files:
 
 ---
 
-# API Status
-
-| Resource   | Status     |
-| ---------- | ---------- |
-| Books      | ✅ Complete |
-| Members    | ✅ Complete |
-| Borrowings | ✅ Complete |
-| Frontend   | ✅ Complete |
-
----
-
 # Frontend Setup
 
 The staff portal is a **Next.js** application located in the `frontend/` directory.
 
-The frontend proxies requests to the FastAPI backend using Next.js rewrites, so no CORS configuration is required.
+The frontend communicates with the FastAPI backend. CORS is enabled during local development for requests originating from `localhost:3000`
 
 ## Prerequisites
 
@@ -315,3 +324,37 @@ cd frontend
 npm run build
 npm start
 ```
+## Screenshots
+
+### Dashboard
+
+Provides an overview of the library, including key statistics and recent borrowing activity.
+
+![Dashboard](docs/images/dashboard.png)
+
+---
+
+### Books
+
+Manage the library's book catalogue, including creating, editing, deleting books, and viewing availability and borrowing history.
+
+![Books](docs/images/books.png)
+![New Book](docs/images/new_book.png)
+
+---
+
+### Members
+
+Manage library members, update member details, and view active or historical borrowings.
+
+![Members](docs/images/members.png)
+![New Member](docs/images/new_member.png)
+
+---
+
+### Borrowings
+
+Record new borrowings, return books, and view active, returned, and overdue borrowings.
+
+![Borrowings](docs/images/borrowings.png)
+![New Borrowing](docs/images/new_borrowing.png)
